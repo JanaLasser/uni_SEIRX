@@ -218,7 +218,7 @@ def run_ensemble(N_runs, measures, simulation_params, contact_network_src,
     elif hostname == 'marvin':
         number_of_cores = 28 # marvin
         print('running on {}, using {} cores'.format(hostname, number_of_cores))
-    elif hostname == 'medea':
+    elif hostname == 'medea.isds.tugraz.at':
         number_of_cores = 100 # medea
         print('running on {}, using {} cores'.format(hostname, number_of_cores))
     else:
