@@ -217,7 +217,7 @@ def run_ensemble(N_runs, contact_network_src, res_path,
         number_of_cores = 28 # marvin
         print('running on {}, using {} cores'.format(hostname, number_of_cores))
     elif hostname == 'medea.isds.tugraz.at':
-        number_of_cores = 200 # medea
+        number_of_cores = 250 # medea
         print('running on {}, using {} cores'.format(hostname, number_of_cores))
     else:
         print('unknown host')
