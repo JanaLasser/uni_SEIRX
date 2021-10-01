@@ -139,6 +139,7 @@ def run_model(params):
     # collect the statistics of the single run
     row = af.get_ensemble_observables_uni(model, seed)
     row['seed'] = seed
+    row['index_case'] = index_case
     row['test_type'] = ttype
     row['unistudent_screen_interval'] = u_screen_interval
     row['lecturer_screen_interval'] = l_screen_interval
@@ -234,6 +235,7 @@ def run_ensemble(N_runs, contact_network_src, res_path,
                         iterable=params), total=len(params)):
         ensemble_results = ensemble_results.append(row, ignore_index=True)
         
-    ensemble_results.to_csv(join(res_path, measure_string + '.csv'))
+    ensemble_results.to_csv(join(res_path, measure_string + '.csv'),
+        index=False)
 
     
