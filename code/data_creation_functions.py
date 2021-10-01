@@ -3,6 +3,7 @@ from os.path import join
 from os import listdir
 import networkx as nx
 import numpy as np
+import json
 
 from scseirx.model_uni import SEIRX_uni
 from scseirx import analysis_functions as af
@@ -64,9 +65,39 @@ def run_model(params):
     model : SEIRX_uni model instance holding a completed simulation run and
         all associated data.
     '''
-    G, agent_types, measures, simulation_params, index_case, ttype,\
-    u_screen_interval, l_screen_interval, unistudent_mask, lecturer_mask,\
-    presence_fraction, ventilation_mod, seed = params
+
+    contact_network_src, ttype, u_screen_interval, \
+    l_screen_interval, unistudent_mask, lecturer_mask, presence_fraction, \
+    ventilation_mod, testing, seed = params
+
+    with open('params/intervention_screening_measures.json', 'r') as fp:
+        measures = json.load(fp)
+    with open('params/intervention_screening_simulation_parameters.json', 'r') as fp:
+        simulation_params = json.load(fp)
+
+    # pick an index case with a probability for unistudents and lecturers
+    # corresponding to an uniform distribution of infection probability
+    # in the general population
+    index_case = np.random.choice(['unistudent', 'lecturer'],
+        p=[simulation_params['unistudent_index_probability'],
+           simulation_params['lecturer_index_probability']]) 
+
+    # create the agent dictionaries based on the given parameter values and
+    # prevention measures
+    agent_types = compose_agents(measures, simulation_params)
+    agent_types['unistudent']['screening_interval'] = u_screen_interval
+    agent_types['lecturer']['screening_interval'] = l_screen_interval
+    agent_types['unistudent']['mask'] = unistudent_mask
+    agent_types['lecturer']['mask'] = lecturer_mask
+
+    # load the contact network, schedule and node_list corresponding to the school
+    fname = 'university_2019-10-01_to_2019-10-07'
+    if testing:
+        fname = 'test'
+
+    G = nx.readwrite.gpickle.read_gpickle(\
+        join(contact_network_src, '{}_fraction-{}.bz2'\
+            .format(fname, presence_fraction))) 
 
     N_steps=1000
 
@@ -119,11 +150,10 @@ def run_model(params):
     return row
 
 
-def run_ensemble(N_runs, measures, simulation_params, contact_network_src, 
-              res_path, unistudent_mask=False, lecturer_mask=False, 
-              presence_fraction=1, 
-              ttype='same_day_antigen', u_screen_interval=None,
-              l_screen_interval=None, ventilation_mod=1, testing=False):
+def run_ensemble(N_runs, contact_network_src, res_path, 
+            unistudent_mask=False, lecturer_mask=False, presence_fraction=1.0, 
+            ttype='same_day_antigen', u_screen_interval=None, 
+            l_screen_interval=None, ventilation_mod=1, testing=False):
     '''
     Utility function to run an ensemble of simulations for a given parameter 
     combination.
@@ -132,22 +162,14 @@ def run_ensemble(N_runs, measures, simulation_params, contact_network_src,
     ----------
     N_runs : integer
         Number of individual simulation runs in the ensemble.
-    measures : dictionary
-        Dictionary listing all prevention measures in place for the given
-        scenario. Fields that are not specifically included in this dictionary
-        will revert to SEIRX_school defaults.
-    simulation_params : dictionary
-        Dictionary holding simulation parameters such as "verbosity" and
-        "base_transmission_risk". Fields that are not included will revert back
-        to SEIRX_school defaults.
-    res_path : string
-        Path to the directory in which results will be saved.
     contact_network_src : string
         Absolute or relative path pointing to the location of the contact
         network used for the calibration runs. The location needs to hold the
         contact networks for each school types in a sub-folder with the same
         name as the school type. Networks need to be saved in networkx's .bz2
         format.
+    res_path : string
+        Path to the directory in which results will be saved.
     index_case : string
         Agent group from which the index case is drawn. Can be "unistudent" or
         "lecturer".
@@ -172,31 +194,7 @@ def run_ensemble(N_runs, measures, simulation_params, contact_network_src,
     ensemble_results : pandas DataFrame
         Data Frame holding the observable of interest of the ensemble, namely
         the number of infected unistudents and lecturers.
-    '''
-
-    # pick an index case with a probability for unistudents and lecturers
-    # corresponding to an uniform distribution of infection probability
-    # in the general population
-    index_case = np.random.choice(['unistudent', 'lecturer'],
-        p=[simulation_params['unistudent_index_probability'],
-           simulation_params['lecturer_index_probability']])
-
-    # create the agent dictionaries based on the given parameter values and
-    # prevention measures
-    agent_types = compose_agents(measures, simulation_params)
-    agent_types['unistudent']['screening_interval'] = u_screen_interval
-    agent_types['lecturer']['screening_interval'] = l_screen_interval
-    agent_types['unistudent']['mask'] = unistudent_mask
-    agent_types['lecturer']['mask'] = lecturer_mask
-
-    # load the contact network, schedule and node_list corresponding to the school
-    fname = 'university_2019-10-01_to_2019-10-07'
-    if testing:
-        fname = 'test'
-
-    G = nx.readwrite.gpickle.read_gpickle(\
-        join(contact_network_src, '{}_fraction-{}.bz2'\
-            .format(fname, presence_fraction)))    
+    '''  
 
     turnovers = {'same':0, 'one':1, 'two':2, 'three':3}
     bmap = {True:'T', False:'F'}
@@ -226,10 +224,10 @@ def run_ensemble(N_runs, measures, simulation_params, contact_network_src,
 
     pool = Pool(number_of_cores)
 
-    params = [(G, agent_types, measures, simulation_params, index_case,
-               ttype, u_screen_interval, l_screen_interval, unistudent_mask,
-               lecturer_mask, presence_fraction, ventilation_mod, i) \
-              for i in range(N_runs)]
+    params = [(contact_network_src, ttype, u_screen_interval, 
+               l_screen_interval, unistudent_mask, lecturer_mask, 
+               presence_fraction, ventilation_mod, testing, i) \
+            for i in range(N_runs)]
     
     ensemble_results = pd.DataFrame()
     for row in tqdm(pool.imap_unordered(func=run_model,
@@ -237,3 +235,5 @@ def run_ensemble(N_runs, measures, simulation_params, contact_network_src,
         ensemble_results = ensemble_results.append(row, ignore_index=True)
         
     ensemble_results.to_csv(join(res_path, measure_string + '.csv'))
+
+    

@@ -5,11 +5,6 @@ import json
 
 import data_creation_functions as dcf
 
-with open('params/intervention_screening_measures.json', 'r') as fp:
-    measures = json.load(fp)
-with open('params/intervention_screening_simulation_parameters.json', 'r') as fp:
-    simulation_params = json.load(fp)
-
 N_runs = int(sys.argv[1])
 
 testing = False
@@ -34,7 +29,6 @@ results = pd.DataFrame()
 for p in params:
     N_runs, unistudent_mask, lecturer_mask, presence_fraction = p
     
-    dcf.run_ensemble(N_runs, measures,\
-            simulation_params, contact_network_src, dst, 
+    dcf.run_ensemble(N_runs, contact_network_src, dst, 
             unistudent_mask=unistudent_mask, lecturer_mask=lecturer_mask,
             presence_fraction=presence_fraction, testing=testing)
