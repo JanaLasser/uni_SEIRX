@@ -11,6 +11,11 @@ with open('params/intervention_screening_simulation_parameters.json', 'r') as fp
     simulation_params = json.load(fp)
 
 N_runs = sys.argv[1]
+
+testing = False
+if N_runs == 1:
+	testing = True
+
 screening_params = pd.read_csv(join('screening_params', 'measure_packages.csv'))
 
 params = [(N_runs, 
@@ -32,4 +37,4 @@ for p in params:
     dcf.run_ensemble(N_runs, measures,\
             simulation_params, contact_network_src, dst, 
             unistudent_mask=unistudent_mask, lecturer_mask=lecturer_mask,
-            presence_fraction=presence_fraction, testing=False)
+            presence_fraction=presence_fraction, testing=Testing)
