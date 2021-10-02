@@ -9,11 +9,13 @@ semester_start = '2019-10-01'
 semester_end = '2020-02-28'
 
 
-def get_study_data(study_id, studies, students, lecturers, groups):
+def get_study_data(study_id, studies, students, lecturers, groups, rooms, 
+                   dates):
     study_data = studies[['study_id', 'study_name']]\
         .drop_duplicates()\
         .set_index('study_id')
-    print('data for study {} ({})'.format(study_id, study_data.loc[study_id, 'study_name']))
+    print('data for study {} ({})'\
+        .format(study_id, study_data.loc[study_id, 'study_name']))
 
     # take all students from the sample study
     sample_student_ids = studies[studies['study_id'] == study_id]\
@@ -43,8 +45,15 @@ def get_study_data(study_id, studies, students, lecturers, groups):
     print('\tthe groups are taught by {}/{} of the available lecturers'\
         .format(len(sample_lecturer_ids), len(lecturers['lecturer_id'].unique())))
     
+    # take all rooms that sample groups are taught in
+    sample_room_ids = dates[dates['group_id']\
+                    .isin(sample_group_ids)]['room_id'].unique()
+    print('\tthe groups are taught in {}/{} of the available rooms'\
+        .format(len(sample_room_ids), len(rooms['room_id'].unique())))       
+
     return (sample_student_ids, sample_students, sample_lecture_ids, 
-            sample_group_ids, sample_lecturers, sample_lecturer_ids)
+            sample_group_ids, sample_lecturers, sample_lecturer_ids,
+            sample_room_ids)
 
 
 def add_students(G, student_df, studies_df):
@@ -89,73 +98,10 @@ def add_lecturers_dummy(G, lecturer_df):
     for lecturer_id in lecturer_ids:
         G.add_node(lecturer_id)
         nx.set_node_attributes(G, {lecturer_id:{'type':'lecturer'}})
-        
-
-def add_student_student_group_contacts(G, student_df, group_ids, day):
-    wd = get_weekday(day)
-    day = str(day)
-    for group_id in group_ids:
-        students_in_group = student_df[\
-            student_df['group_id'] == group_id]['student_id']
-        assert len(students_in_group) == len(set(students_in_group))
-        
-        #print('group {}: {} students'.format(group_id, len(students_in_group)))
-        edge_keys = []
-        for s1 in students_in_group:
-            for s2 in students_in_group:
-                tmp = [s1, s2]
-                tmp.sort()
-                s1, s2 = tmp
-                key = '{}{}d{}'.format(s1, s2, wd)
-                if s1 != s2 and key not in edge_keys:
-                    G.add_edge(s1, s2, \
-                               link_type = 'student_student_group',
-                               day = day,
-                               weekday = wd,
-                               group = group_id,
-                               key = key)
-                    edge_keys.append(key)
-        #print('added {} edges for group {}'.format(j, group_id))
-        #print()
-    #print('added a total of {} edges'.format(i))
 
 
-    
-def add_student_lecturer_group_contacts(G, student_df, lecturer_df, 
-                                        group_ids, day):
-    wd = get_weekday(day)
-    day = str(day)
-    for group_id in group_ids:
-        students_in_group = student_df[\
-            student_df['group_id'] == group_id]['student_id']
-        assert len(students_in_group) == len(set(students_in_group))
-        lecturers_in_group = lecturer_df[\
-            lecturer_df['group_id'] == group_id]['lecturer_id']
-        assert len(lecturers_in_group) == len(set(lecturers_in_group))
-        
-        #print('group {}: {} students, {} lecturers'\
-        #      .format(group_id, len(students_in_group), len(lecturers_in_group)))
-        edge_keys = []
-        for n1 in students_in_group:
-            for n2 in lecturers_in_group:
-                tmp = [n1, n2]
-                tmp.sort()
-                n1, n2 = tmp
-                key = '{}{}d{}'.format(n1, n2, wd)
-                if key not in edge_keys:
-                    G.add_edge(n1, n2, \
-                               link_type = 'student_lecturer_group',
-                               day = day,
-                               weekday = wd,
-                               group = group_id,
-                               key = key)
-                    edge_keys.append(key)
-        #print('added {} edges for group {}'.format(j, group_id))
-        #print()
-    #print('added a total of {} edges'.format(i))
-
-
-def add_group_contacts_half(G, student_df, lecturer_df, group_ids, day, frac):
+def add_group_contacts(G, student_df, lecturer_df, dates, rooms, day, frac,
+                       group_ids):
     wd = get_weekday(day)
     day = str(day)
     for group_id in group_ids:
@@ -165,9 +111,41 @@ def add_group_contacts_half(G, student_df, lecturer_df, group_ids, day, frac):
         lecturers_in_group = lecturer_df[\
             lecturer_df['group_id'] == group_id]['lecturer_id'].unique()
 
+        # figure out which room the group was taught in and how many seats
+        # that room has
+        room = dates[(dates['group_id'] == group_id) & (dates['date'] == day)]
+        room = room['room_id'].values[0]
+        seats = rooms[rooms['room_id'] == room]['seats']
+        if len(seats) == 0:
+            seats = np.nan
+        elif len(seats) == 1:
+            seats = seats.values[0]
+        else:
+            print('room {} has more than one seat number!'.format(room))
+
         # remove a fraction of students from the lecture rooms
-        students_in_group = np.random.choice(students_in_group, 
-            int(len(students_in_group) * frac), replace=False)
+        if seats == seats: # nan-check
+            # the number of students to remove is the difference between the 
+            # students that signed up for the lecture and the capacity of the 
+            # room, calculated as it's total capacity multiplied by an occupancy
+            # fraction
+            available_seats = int(np.floor((frac * seats)))
+            students_to_remove = max(0, len(students_in_group) - available_seats)
+            
+
+            #print('removing {}/{} students from room with {:1.0f} seats (occupancy {:1.0f}%)'\
+            #     .format(students_to_remove, len(students_in_group),
+            #             seats, frac * 100))
+            if students_to_remove > 0:
+                print('removing {}/{} students from room with {:1.0f} seats (occupancy {:1.0f}%)'\
+                 .format(students_to_remove, len(students_in_group),
+                         seats, frac * 100))
+
+            students_in_group = np.random.choice(students_in_group, 
+                len(students_in_group) - students_to_remove, replace=False)
+        else:
+            students_in_group = np.random.choice(students_in_group, 
+                int(len(students_in_group) * frac), replace=False)
         
         edge_keys = []
         for s1 in students_in_group:
@@ -200,45 +178,38 @@ def add_group_contacts_half(G, student_df, lecturer_df, group_ids, day, frac):
                                group = group_id,
                                key = key)
                     edge_keys.append(key)
-
     
     
 def create_single_day_network(students, lecturers, studies, organisations, 
-                              dates, day):
+                              dates, rooms, day, frac=1):
     sample_dates = dates[dates['date'] == pd.to_datetime(day)]
     all_groups = students['group_id'].unique()
-    groups = set(all_groups).intersection(set(sample_dates['group_id']))
+    group_ids = set(all_groups).intersection(set(sample_dates['group_id']))
     
     G = nx.MultiGraph()
     add_students(G, students, studies)
     add_lecturers(G, lecturers, organisations)
-    add_student_student_group_contacts(G, students, groups, day.date())
-    add_student_lecturer_group_contacts(G, students, lecturers, groups,
-                                        day.date())
+    add_group_contacts(G, students, lecturers, sample_dates, rooms, day, frac,
+                       group_ids)
     
     return G
 
 
 def create_network(students, lecturers, studies, organisations, 
-                              dates, days, half=False, frac=1):
+                              dates, rooms, days, frac=1):
     
     all_groups = students['group_id'].unique()
     G = nx.MultiGraph()
     
     for day in days:
         sample_dates = dates[dates['date'] == pd.to_datetime(day)]
-        groups = set(all_groups).intersection(set(sample_dates['group_id']))
+        group_ids = set(all_groups).intersection(set(sample_dates['group_id']))
 
         add_students(G, students, studies)
         add_lecturers(G, lecturers, organisations)
+        add_group_contacts(G, students, lecturers, sample_dates, rooms, day,
+                           frac, group_ids)
 
-        if half:
-            add_group_contacts_half(G, students, lecturers, groups, day, frac=1)
-        else:
-            add_student_student_group_contacts(G, students, groups, day.date())
-            add_student_lecturer_group_contacts(G, students, lecturers, groups,
-                                                day.date())
-    
     return G
 
 
