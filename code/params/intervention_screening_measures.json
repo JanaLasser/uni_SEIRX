@@ -1,5 +1,5 @@
 {
-	"testing": "preventive",
+	"testing": "diagnostic",
 	"preventive_screening_test_type": "same_day_antigen",
 	"diagnostic_test_type": "two_day_PCR",
 	"K1_contact_types": ["close"],
@@ -11,6 +11,6 @@
 	"follow_up_testing_interval": null,
 	"liberating_testing": false,
 	"transmission_risk_ventilation_modifier": null,
-	"unistudent_vaccination_ratio":0.8,
-	"lecturer_vaccination_ratio":0.8
+	"unistudent_vaccination_ratio":0.6,
+	"lecturer_vaccination_ratio":0.6
 }

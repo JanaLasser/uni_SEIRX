@@ -64,22 +64,25 @@ def run_model(params):
         all associated data.
     '''
 
-    contact_network_src, ttype, u_screen_interval, \
-    l_screen_interval, unistudent_mask, lecturer_mask, presence_fraction, \
-    ventilation_mod, testing, seed = params
+    contact_network_src, ttype, u_vaccination_ratio, l_vaccination_ratio, \
+    u_screen_interval, l_screen_interval, u_mask, l_mask, \
+    presence_fraction, ventilation_mod, testing, seed = params
 
     with open('params/intervention_screening_measures.json', 'r') as fp:
         measures = json.load(fp)
     with open('params/intervention_screening_simulation_parameters.json', 'r') as fp:
         simulation_params = json.load(fp)
 
+    measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
+    measures['lecturer_vaccination_ratio'] = l_vaccination_ratio
+
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
     agent_types = compose_agents(measures, simulation_params)
     agent_types['unistudent']['screening_interval'] = u_screen_interval
     agent_types['lecturer']['screening_interval'] = l_screen_interval
-    agent_types['unistudent']['mask'] = unistudent_mask
-    agent_types['lecturer']['mask'] = lecturer_mask
+    agent_types['unistudent']['mask'] = u_mask
+    agent_types['lecturer']['mask'] = l_mask
 
     # load the contact network, schedule and node_list corresponding to the school
     fname = 'university_2019-10-01_to_2019-10-07'
@@ -145,8 +148,10 @@ def run_model(params):
     row['test_type'] = ttype
     row['unistudent_screen_interval'] = u_screen_interval
     row['lecturer_screen_interval'] = l_screen_interval
-    row['unistudent_mask'] = unistudent_mask
-    row['lecturer_mask'] = lecturer_mask
+    row['unistudent_mask'] = u_mask
+    row['lecturer_mask'] = l_mask
+    row['unistudent_vaccination_ratio'] = u_vaccination_ratio
+    row['lecturer_vaccination_ratio'] = l_vaccination_ratio
     row['presence_fraction'] = presence_fraction
     row['ventilation_mod'] = ventilation_mod
         
@@ -154,7 +159,9 @@ def run_model(params):
 
 
 def run_ensemble(N_runs, contact_network_src, res_path, 
-            unistudent_mask=False, lecturer_mask=False, presence_fraction=1.0, 
+            u_mask=False, l_mask=False, 
+            u_vaccination_ratio=0.8, l_vaccination_ratio=0.8,
+            presence_fraction=1.0, 
             ttype='same_day_antigen', u_screen_interval=None, 
             l_screen_interval=None, ventilation_mod=1, testing=False):
     '''
@@ -205,7 +212,8 @@ def run_ensemble(N_runs, contact_network_src, res_path,
     turnover = turnovers[turnover]
         
     measure_string = 'university_lmask-{}_umask-{}_pfrac-{}'\
-        .format(bmap[lecturer_mask], bmap[unistudent_mask], presence_fraction)
+        .format(bmap[l_mask], bmap[u_mask], presence_fraction) +\
+        '_uvacc-{}_lvacc-{}'.format(u_vaccination_ratio, l_vaccination_ratio)
 
     # figure out which host we are running on and determine number of cores to
     # use for the parallel programming
@@ -227,8 +235,9 @@ def run_ensemble(N_runs, contact_network_src, res_path,
 
     pool = Pool(number_of_cores)
 
-    params = [(contact_network_src, ttype, u_screen_interval, 
-               l_screen_interval, unistudent_mask, lecturer_mask, 
+    params = [(contact_network_src, ttype, u_vaccination_ratio,
+               l_vaccination_ratio, u_screen_interval, 
+               l_screen_interval, u_mask, l_mask, 
                presence_fraction, ventilation_mod, testing, i) \
             for i in range(N_runs)]
     

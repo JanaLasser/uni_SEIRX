@@ -16,6 +16,8 @@ screening_params = pd.read_csv(join('screening_params', 'measure_packages.csv'))
 params = [(N_runs, 
            row['u_mask'],
            row['l_mask'], 
+           row['u_vaccination_ratio'],
+           row['l_vaccination_ratio'],
            row['presence_fraction'])
            for i, row in screening_params.iterrows()]
 
@@ -27,8 +29,11 @@ dst = '../data/simulation_results/ensembles'
 
 results = pd.DataFrame()
 for p in params:
-    N_runs, unistudent_mask, lecturer_mask, presence_fraction = p
+    N_runs, u_mask, l_mask, u_vaccination_ratio,\
+    l_vaccination_ratio, presence_fraction = p
     
     dcf.run_ensemble(N_runs, contact_network_src, dst, 
-            unistudent_mask=unistudent_mask, lecturer_mask=lecturer_mask,
+            u_mask=u_mask, l_mask=l_mask,
+            u_vaccination_ratio=u_vaccination_ratio,
+            l_vaccination_ratio=l_vaccination_ratio,
             presence_fraction=presence_fraction, testing=testing)
