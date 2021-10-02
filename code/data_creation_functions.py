@@ -75,13 +75,6 @@ def run_model(params):
     with open('params/intervention_screening_simulation_parameters.json', 'r') as fp:
         simulation_params = json.load(fp)
 
-    # pick an index case with a probability for unistudents and lecturers
-    # corresponding to an uniform distribution of infection probability
-    # in the general population
-    index_case = np.random.choice(['unistudent', 'lecturer'],
-        p=[simulation_params['unistudent_index_probability'],
-           simulation_params['lecturer_index_probability']]) 
-
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
     agent_types = compose_agents(measures, simulation_params)
@@ -98,6 +91,17 @@ def run_model(params):
     G = nx.readwrite.gpickle.read_gpickle(\
         join(contact_network_src, '{}_fraction-{}.bz2'\
             .format(fname, presence_fraction))) 
+
+    # pick an index case with a probability for unistudents and lecturers
+    # corresponding to an uniform distribution of infection probability
+    # in the general population
+    N_students = len([n for n in G.nodes(data='type') if n[1] == 'unistudent'])
+    N_lecturers = len([n for n in G.nodes(data='type') if n[1] == 'lecturer'])
+    p_student = N_students / (N_students + N_lecturers)
+    p_lecturer = N_lecturers / (N_students + N_lecturers)
+
+    index_case = np.random.choice(['unistudent', 'lecturer'], 
+        p=[p_student, p_lecturer]) 
 
     N_steps=1000
 

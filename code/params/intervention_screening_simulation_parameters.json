@@ -5,8 +5,6 @@
 	"exposure_duration": [3.0, 1.9],
 	"time_until_symptoms": [4.4, 1.9],
 	"infection_duration": [10.91, 3.95],
-	"unistudent_index_probability": 0.9319711343549826,
-	"lecturer_index_probability": 0.06802886564501744,
 	"infection_risk_contact_type_weights":{"very_far": 0, "far": 0.26, "intermediate": 0.26, "close": 1},
 	"age_transmission_discount": {"slope":0, "intercept": 1},
 	"age_symptom_discount": {"slope":0, "intercept":0.6},
