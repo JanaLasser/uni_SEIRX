@@ -24,7 +24,7 @@ def compose_agents(measures, simulation_params):
     ----------
     prevention_measures : dictionary
         Dictionary of prevention measures. Needs to include the fields 
-        (student, teacher, family_member) _screen_interval, index_probability
+        (student, teacher, family_member) _screen_interval
         and _mask. 
         
     Returns
@@ -38,13 +38,11 @@ def compose_agents(measures, simulation_params):
     agent_types = {
             'unistudent':{
                 'screening_interval':measures['unistudent_screen_interval'],
-                'index_probability':simulation_params['unistudent_index_probability'],
                 'mask':measures['unistudent_mask'],
                 'vaccination_ratio':measures['unistudent_vaccination_ratio']},
 
             'lecturer':{
                 'screening_interval': measures['lecturer_screen_interval'],
-                'index_probability': simulation_params['lecturer_index_probability'],
                 'mask':measures['lecturer_mask'],
                 'vaccination_ratio':measures['lecturer_vaccination_ratio']},
     }
