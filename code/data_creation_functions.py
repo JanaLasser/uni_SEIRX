@@ -1,6 +1,6 @@
 import pandas as pd
-from os.path import join
-from os import listdir
+from os.path import join, exists
+from os import listdir, mkdir
 import networkx as nx
 import numpy as np
 import json
@@ -64,13 +64,14 @@ def run_model(params):
         all associated data.
     '''
 
-    contact_network_src, ttype, u_vaccination_ratio, l_vaccination_ratio, \
+    mode, contact_network_src, testing, \
+    u_vaccination_ratio, l_vaccination_ratio, \
     u_screen_interval, l_screen_interval, u_mask, l_mask, \
-    presence_fraction, ventilation_mod, testing, seed = params
+    presence_fraction, seed = params
 
-    with open('params/intervention_screening_measures.json', 'r') as fp:
+    with open('params/{}_measures.json'.format(mode), 'r') as fp:
         measures = json.load(fp)
-    with open('params/intervention_screening_simulation_parameters.json', 'r') as fp:
+    with open('params/{}_simulation_parameters.json'.format(mode), 'r') as fp:
         simulation_params = json.load(fp)
 
     measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
@@ -106,6 +107,15 @@ def run_model(params):
 
     N_steps=1000
 
+    print('measures:')
+    print(measures)
+
+    print('simulation parameters')
+    print(simulation_params)
+
+    print('agent settings')
+    print(agent_types)
+
     # initialize the model
     model = SEIRX_uni(G, 
       simulation_params['verbosity'], 
@@ -120,7 +130,8 @@ def run_model(params):
                  simulation_params['infection_risk_contact_type_weights'],
       K1_contact_types = measures['K1_contact_types'],
       diagnostic_test_type = measures['diagnostic_test_type'],
-      preventive_screening_test_type = ttype,
+      preventive_screening_test_type = \
+                 measures['preventive_screening_test_type'],
       follow_up_testing_interval = \
                  measures['follow_up_testing_interval'],
       liberating_testing = measures['liberating_testing'],
@@ -130,7 +141,8 @@ def run_model(params):
                          simulation_params['age_transmission_discount'],
       age_symptom_modification = simulation_params['age_symptom_discount'],
       mask_filter_efficiency = simulation_params['mask_filter_efficiency'],
-      transmission_risk_ventilation_modifier = ventilation_mod,
+      transmission_risk_ventilation_modifier = \
+                 measures['transmission_risk_ventilation_modifier'],
       seed=seed)
 
     # run the model until the outbreak is over
@@ -145,7 +157,6 @@ def run_model(params):
     row = af.get_ensemble_observables_uni(model, seed)
     row['seed'] = seed
     row['index_case'] = index_case
-    row['test_type'] = ttype
     row['unistudent_screen_interval'] = u_screen_interval
     row['lecturer_screen_interval'] = l_screen_interval
     row['unistudent_mask'] = u_mask
@@ -153,17 +164,17 @@ def run_model(params):
     row['unistudent_vaccination_ratio'] = u_vaccination_ratio
     row['lecturer_vaccination_ratio'] = l_vaccination_ratio
     row['presence_fraction'] = presence_fraction
-    row['ventilation_mod'] = ventilation_mod
+    row['testing'] = measures['testing']
+    row['transmission_risk_ventilation_modifier'] =\
+        measures['transmission_risk_ventilation_modifier']
         
     return row
 
 
-def run_ensemble(N_runs, contact_network_src, res_path, 
-            u_mask=False, l_mask=False, 
-            u_vaccination_ratio=0.8, l_vaccination_ratio=0.8,
-            presence_fraction=1.0, 
-            ttype='same_day_antigen', u_screen_interval=None, 
-            l_screen_interval=None, ventilation_mod=1, testing=False):
+def run_ensemble(mode, N_runs, contact_network_src, res_path, 
+                 u_mask=False, l_mask=False, u_vaccination_ratio=0.0,
+                 l_vaccination_ratio=0.0, presence_fraction=1.0, 
+                 u_screen_interval=None, l_screen_interval=None, testing=False):
     '''
     Utility function to run an ensemble of simulations for a given parameter 
     combination.
@@ -206,11 +217,7 @@ def run_ensemble(N_runs, contact_network_src, res_path,
         the number of infected unistudents and lecturers.
     '''  
 
-    turnovers = {'same':0, 'one':1, 'two':2, 'three':3}
     bmap = {True:'T', False:'F'}
-    turnover, _, test = ttype.split('_')
-    turnover = turnovers[turnover]
-        
     measure_string = 'university_lmask-{}_umask-{}_pfrac-{}'\
         .format(bmap[l_mask], bmap[u_mask], presence_fraction) +\
         '_uvacc-{}_lvacc-{}'.format(u_vaccination_ratio, l_vaccination_ratio)
@@ -235,10 +242,10 @@ def run_ensemble(N_runs, contact_network_src, res_path,
 
     pool = Pool(number_of_cores)
 
-    params = [(contact_network_src, ttype, u_vaccination_ratio,
-               l_vaccination_ratio, u_screen_interval, 
-               l_screen_interval, u_mask, l_mask, 
-               presence_fraction, ventilation_mod, testing, i) \
+    params = [(mode, contact_network_src, testing,
+               u_vaccination_ratio, l_vaccination_ratio,
+               u_screen_interval, l_screen_interval, 
+               u_mask, l_mask, presence_fraction, i) \
             for i in range(N_runs)]
     
     ensemble_results = pd.DataFrame()
@@ -246,6 +253,9 @@ def run_ensemble(N_runs, contact_network_src, res_path,
                         iterable=params), total=len(params)):
         ensemble_results = ensemble_results.append(row, ignore_index=True)
         
+    if not exists(res_path):
+        mkdir(res_path)
+
     ensemble_results.to_csv(join(res_path, measure_string + '.csv'),
         index=False)
 
