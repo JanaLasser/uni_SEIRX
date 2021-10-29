@@ -86,7 +86,7 @@ def run_model(params):
     agent_types['lecturer']['mask'] = l_mask
 
     # load the contact network, schedule and node_list corresponding to the school
-    fname = 'university_2019-10-01_to_2019-10-07'
+    fname = 'university_2019-10-16_to_2019-10-23'
     if testing:
         fname = 'test'
 
