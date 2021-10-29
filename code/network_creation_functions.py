@@ -97,20 +97,57 @@ def add_students(G, student_df, studies_df):
                              data['type'] == 'unistudent'])
     new_students = set(student_df['student_id']).difference(existing_students)
     student_ids = list(new_students)
+    student_df = student_df[student_df['student_id'].isin(new_students)]
+    studies_df = studies_df.set_index(['student_id', 'study_id'])
     print('adding {} students'.format(len(student_ids)))
     
-    # TODO: map units to campuses
+    # Students can have more than one study. Find a student's main study
+    # by looking at the study id of the individual lectures they visit.
+    # A student's main study in the given semester is the study from which
+    # the majority of their lectures stems.
+    lecture_counts = student_df[['student_id', 'study_id', 'lecture_id']]\
+        .groupby(by=['student_id', 'study_id'])\
+        .agg('count')\
+        .rename(columns={'lecture_id':'lecture_count'})\
+        .sort_values(by='lecture_count', ascending=False)\
+        .reset_index()
+    main_studies = lecture_counts[['student_id', 'study_id']]\
+        .drop_duplicates(subset=['student_id'])\
+        .set_index('student_id')
+    
+    # add information whether the student is a TU Graz or NaWi student
+    study_labels = pd.read_csv(join('../data/cleaned', 'study_labels.csv'))
+    label_map = {row['study_id']:row['study_label'] for i, row in \
+                study_labels.iterrows()}
+    main_studies['study_label'] = main_studies['study_id']\
+        .replace(label_map)
+    
+    no_study_found = 0
     for student_id in student_ids:
+        # get the main study and the term number for the main study
+        main_study = main_studies.loc[student_id, 'study_id']
+        study_type = main_studies.loc[student_id, 'study_label']
+        try:
+            term = studies_df.loc[student_id, main_study]['term_number']
+        except KeyError:
+            no_study_found += 1
+            term = np.nan
+        
+        # add the student as a node to the network and all information
+        # we have for the student as node attributes.
+        # Note: the attribute "unit" is a meaningless artifact that we
+        # need to include to satisfy the design conditions of the contact
+        # network for the agent based simulation
         G.add_node(student_id)
-        studies = studies_df[studies_df['student_id'] == student_id]\
-            .set_index('study_id')
         nx.set_node_attributes(G, {student_id:{
             'type':'unistudent',
-            'studies':list(studies.index),
-            'terms':{study:studies.loc[study, 'term_number'] for \
-                     study in studies.index},
-            'unit':1}
+            'main_study':main_study,
+            'study_type':study_type,
+            'term':term,
+            'unit':1} 
         })
+    print('no study found for {} students'.format(no_study_found))
+        
         
 def add_students_dummy(G, student_df):
     existing_students = set([n for n, data in G.nodes(data=True) if \
@@ -121,7 +158,8 @@ def add_students_dummy(G, student_df):
     
     for student_id in student_ids:
         G.add_node(student_id)
-        nx.set_node_attributes(G, {student_id:{'type':'student'}})
+        nx.set_node_attributes(G, {student_id:{'type':'unistudent'}})
+        
         
 def add_lecturers(G, lecturer_df, organisation_df):
     existing_lecturers = set([n for n, data in G.nodes(data=True) if \
