@@ -64,7 +64,7 @@ def run_model(params):
         all associated data.
     '''
 
-    mode, contact_network_src, testing, \
+    mode, contact_network_src, contact_network_type, testing, \
     u_vaccination_ratio, l_vaccination_ratio, \
     u_screen_interval, l_screen_interval, u_mask, l_mask, \
     presence_fraction, seed = params
@@ -91,8 +91,8 @@ def run_model(params):
         fname = 'test'
 
     G = nx.readwrite.gpickle.read_gpickle(\
-        join(contact_network_src, '{}_fraction-{}.bz2'\
-            .format(fname, presence_fraction))) 
+        join(contact_network_src, '{}_fraction-{}_{}.bz2'\
+            .format(fname, presence_fraction, contact_network_type))) 
 
     # pick an index case with a probability for unistudents and lecturers
     # corresponding to an uniform distribution of infection probability
@@ -171,7 +171,7 @@ def run_model(params):
     return row
 
 
-def run_ensemble(mode, N_runs, contact_network_src, res_path, 
+def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_path, 
                  u_mask=False, l_mask=False, u_vaccination_ratio=0.0,
                  l_vaccination_ratio=0.0, presence_fraction=1.0, 
                  u_screen_interval=None, l_screen_interval=None, testing=False):
@@ -189,6 +189,10 @@ def run_ensemble(mode, N_runs, contact_network_src, res_path,
         contact networks for each school types in a sub-folder with the same
         name as the school type. Networks need to be saved in networkx's .bz2
         format.
+    contact_network_src : string
+        Type of the contact network. Can be "all" (all students), "TU" (only
+        TU Graz students) and "NaWi" (only NaWi students, i.e. students that
+        are shared with KFU Graz).
     res_path : string
         Path to the directory in which results will be saved.
     index_case : string
@@ -242,7 +246,7 @@ def run_ensemble(mode, N_runs, contact_network_src, res_path,
 
     pool = Pool(number_of_cores)
 
-    params = [(mode, contact_network_src, testing,
+    params = [(mode, contact_network_src, contact_network_type, testing,
                u_vaccination_ratio, l_vaccination_ratio,
                u_screen_interval, l_screen_interval, 
                u_mask, l_mask, presence_fraction, i) \
