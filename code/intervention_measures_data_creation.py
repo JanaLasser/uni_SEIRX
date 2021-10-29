@@ -20,7 +20,7 @@ params = [(N_runs,
            row['u_vaccination_ratio'],
            row['l_vaccination_ratio'],
            row['presence_fraction'],
-           contct_network_type)
+           contact_network_type)
            for i, row in screening_params.iterrows()\
            for contact_network_type in ['all', 'TU', 'Nawi']]
 
