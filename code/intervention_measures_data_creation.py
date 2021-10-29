@@ -19,20 +19,24 @@ params = [(N_runs,
            row['l_mask'], 
            row['u_vaccination_ratio'],
            row['l_vaccination_ratio'],
-           row['presence_fraction'])
-           for i, row in screening_params.iterrows()]
+           row['presence_fraction'],
+           contct_network_type)
+           for i, row in screening_params.iterrows()\
+           for contact_network_type in ['all', 'TU', 'Nawi']]
 
 print('there are {} different parameter combinations'.format(len(params)))
 
 
 contact_network_src = '../data/networks'
-dst = '../data/simulation_results/ensembles_{}'.format(mode)
 
 for p in params:
     N_runs, u_mask, l_mask, u_vaccination_ratio,\
-    l_vaccination_ratio, presence_fraction = p
+    l_vaccination_ratio, presence_fraction, contact_network_type = p
     
-    dcf.run_ensemble(mode, N_runs, contact_network_src, dst, 
+    dst = '../data/simulation_results/ensembles_{}_{}'\
+        .format(mode, contact_network_type)
+    
+    dcf.run_ensemble(mode, N_runs, contact_network_src, contact_network_type, dst, 
             u_mask=u_mask, l_mask=l_mask,
             u_vaccination_ratio=u_vaccination_ratio,
             l_vaccination_ratio=l_vaccination_ratio,
