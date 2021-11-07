@@ -107,14 +107,14 @@ def run_model(params):
 
     N_steps=1000
 
-    print('measures:')
-    print(measures)
+    #print('measures:')
+    #print(measures)
 
-    print('simulation parameters')
-    print(simulation_params)
+    #print('simulation parameters')
+    #print(simulation_params)
 
-    print('agent settings')
-    print(agent_types)
+    #print('agent settings')
+    #print(agent_types)
 
     # initialize the model
     model = SEIRX_uni(G, 
