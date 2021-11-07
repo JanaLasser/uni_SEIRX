@@ -22,7 +22,7 @@ params = [(N_runs,
            row['presence_fraction'],
            contact_network_type)
            for i, row in screening_params.iterrows()\
-           for contact_network_type in ['all', 'TU', 'Nawi']]
+           for contact_network_type in ['NaWi']]
 
 print('there are {} different parameter combinations'.format(len(params)))
 
