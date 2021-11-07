@@ -19,11 +19,11 @@ params = [(N_runs,
            row['l_mask'], 
            row['u_vaccination_ratio'],
            row['l_vaccination_ratio'],
-           #row['presence_fraction'],
-           'overbooked',
+           row['presence_fraction'],
+           #'overbooked',
            contact_network_type)
            for i, row in screening_params.iterrows()\
-           for contact_network_type in ['all', 'TU', 'NaWi']]
+           for contact_network_type in ['all', 'TU']]
 
 print('there are {} different parameter combinations'.format(len(params)))
 
