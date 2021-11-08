@@ -32,9 +32,6 @@ contact_network_src = '../data/networks'
 for p in params:
     N_runs, u_mask, l_mask, u_vaccination_ratio,\
     l_vaccination_ratio, presence_fraction, contact_network_type = p
-        
-    if presence_fraction != 'overbooked':
-        continue
     
     dst = '../data/simulation_results/ensembles_{}_{}'\
         .format(mode, contact_network_type)
