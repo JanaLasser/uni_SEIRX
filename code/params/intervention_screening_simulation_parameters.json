@@ -9,5 +9,5 @@
 	"age_transmission_discount": {"slope":0, "intercept": 1},
 	"age_symptom_discount": {"slope":0, "intercept":0.6},
 	"mask_filter_efficiency":{"exhale":0.5, "inhale":0.7},
-	"vaccination_modification":{"reception":0.6, "transmission":0.0}
+	"vaccination_modification":{"reception":0.47, "transmission":0.0}
 }
