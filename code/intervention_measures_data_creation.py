@@ -13,6 +13,8 @@ if N_runs == 1:
 
 screening_params = pd.read_csv(join('screening_params', 'measure_packages.csv'))
 mode = 'intervention_screening'
+#network_types = ['all', 'TU', 'NaWi']
+network_types = ['all']
 
 params = [(N_runs, 
            row['u_mask'],
@@ -22,7 +24,7 @@ params = [(N_runs,
            row['presence_fraction'],
            contact_network_type)
            for i, row in screening_params.iterrows()\
-           for contact_network_type in ['all', 'TU', 'NaWi']]
+           for contact_network_type in network_types]
 
 print('there are {} different parameter combinations'.format(len(params)))
 
