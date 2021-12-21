@@ -76,7 +76,7 @@ def run_model(params):
 
     measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
     measures['lecturer_vaccination_ratio'] = l_vaccination_ratio
-    simulation_params["vaccination_modification"] = vaccination_modification
+    simulation_params["transmission_risk_vaccination_modifier"] = vaccination_modification
 
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
