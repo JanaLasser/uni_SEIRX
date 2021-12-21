@@ -1,0 +1,17 @@
+u_mask,l_mask,presence_fraction,u_vaccination_ratio,l_vaccination_ratio
+FALSE,FALSE,overbooked,0.8,0.8
+TRUE,TRUE,overbooked,0.8,0.8
+TRUE,FALSE,overbooked,0.8,0.8
+FALSE,TRUE,overbooked,0.8,0.8
+FALSE,FALSE,overbooked,0.7,0.7
+TRUE,TRUE,overbooked,0.7,0.7
+TRUE,FALSE,overbooked,0.7,0.7
+FALSE,TRUE,overbooked,0.7,0.7
+FALSE,FALSE,0.5,0.7,0.7
+TRUE,TRUE,0.5,0.7,0.7
+TRUE,FALSE,0.5,0.7,0.7
+FALSE,TRUE,0.5,0.7,0.7
+FALSE,FALSE,0.25,0.7,0.7
+TRUE,TRUE,0.25,0.7,0.7
+TRUE,FALSE,0.25,0.7,0.7
+FALSE,TRUE,0.25,0.7,0.7

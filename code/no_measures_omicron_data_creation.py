@@ -11,8 +11,11 @@ testing = False
 if N_runs == 1:
 	testing = True
 
-mode = 'no_intervention'
+mode = 'no_intervention_omicron'
+screening_params = pd.read_csv(join('screening_params', mode + '.csv'))
 contact_network_src = '../data/networks'
+
+network_types = ['all']
 
 params = [(N_runs, 
            False,
@@ -20,14 +23,17 @@ params = [(N_runs,
            0.0,
            0.0,
            'overbooked',
+           row["vaccination_modification"],
            contact_network_type)
-           for contact_network_type in ['all', 'TU', 'NaWi']]
+           for i, row in screening_params.iterrows()\
+           for contact_network_type in network_types]
 
 for p in params:
     N_runs, u_mask, l_mask, u_vaccination_ratio,\
-    l_vaccination_ratio, presence_fraction, contact_network_type = p
+    l_vaccination_ratio, presence_fraction, \
+    vaccination_modification, contact_network_type = p
     
-    dst = '../data/simulation_results/ensembles_{}_{}'\
+    dst = '../data/simulation_results/omicron/ensembles_{}_{}'\
         .format(mode, contact_network_type)
     
     dcf.run_ensemble(mode, N_runs, contact_network_src, 
@@ -35,5 +41,6 @@ for p in params:
             u_mask=u_mask, l_mask=l_mask,
             u_vaccination_ratio=u_vaccination_ratio,
             l_vaccination_ratio=l_vaccination_ratio,
-            presence_fraction=presence_fraction, testing=testing)
+            presence_fraction=presence_fraction, testing=testing, 
+            vaccination_modification=vaccination_modification)
 

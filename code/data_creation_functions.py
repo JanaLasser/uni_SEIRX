@@ -67,7 +67,7 @@ def run_model(params):
     mode, contact_network_src, contact_network_type, testing, \
     u_vaccination_ratio, l_vaccination_ratio, \
     u_screen_interval, l_screen_interval, u_mask, l_mask, \
-    presence_fraction, seed = params
+    presence_fraction, vaccination_modification, seed = params
 
     with open('params/{}_measures.json'.format(mode), 'r') as fp:
         measures = json.load(fp)
@@ -76,6 +76,7 @@ def run_model(params):
 
     measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
     measures['lecturer_vaccination_ratio'] = l_vaccination_ratio
+    simulation_params["vaccination_modification"] = vaccination_modification
 
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
@@ -107,15 +108,6 @@ def run_model(params):
 
     N_steps=1000
 
-    #print('measures:')
-    #print(measures)
-
-    #print('simulation parameters')
-    #print(simulation_params)
-
-    #print('agent settings')
-    #print(agent_types)
-
     # initialize the model
     model = SEIRX_uni(G, 
       simulation_params['verbosity'], 
@@ -143,6 +135,8 @@ def run_model(params):
       mask_filter_efficiency = simulation_params['mask_filter_efficiency'],
       transmission_risk_ventilation_modifier = \
                  measures['transmission_risk_ventilation_modifier'],
+      transmission_risk_vaccination_modifier = \
+                 simulation_params['vaccination_modification'],
       seed=seed)
 
     # run the model until the outbreak is over
@@ -166,7 +160,9 @@ def run_model(params):
     row['presence_fraction'] = presence_fraction
     row['testing'] = measures['testing']
     row['transmission_risk_ventilation_modifier'] =\
-        measures['transmission_risk_ventilation_modifier']
+        measures['transmission_risk_ventilation_modifier'],
+    row['transmission_risk_vaccination_modifier'] =\
+        simulation_params['transmission_risk_vaccination_modifier']
         
     return row
 
@@ -174,7 +170,8 @@ def run_model(params):
 def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_path, 
                  u_mask=False, l_mask=False, u_vaccination_ratio=0.0,
                  l_vaccination_ratio=0.0, presence_fraction=1.0, 
-                 u_screen_interval=None, l_screen_interval=None, testing=False):
+                 u_screen_interval=None, l_screen_interval=None, testing=False,
+                 vaccination_modification=0.6):
     '''
     Utility function to run an ensemble of simulations for a given parameter 
     combination.
@@ -189,30 +186,30 @@ def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_pa
         contact networks for each school types in a sub-folder with the same
         name as the school type. Networks need to be saved in networkx's .bz2
         format.
-    contact_network_src : string
+    contact_network_type : string
         Type of the contact network. Can be "all" (all students), "TU" (only
         TU Graz students) and "NaWi" (only NaWi students, i.e. students that
         are shared with KFU Graz).
     res_path : string
         Path to the directory in which results will be saved.
-    index_case : string
-        Agent group from which the index case is drawn. Can be "unistudent" or
-        "lecturer".
-    ttype : string
-        Test type used for preventive screening. For example "same_day_antigen"
+    u_mask : bool
+        Wheter or not unistudents wear masks.
+    l_mask : bool
+        Wheter or not lecturers wear masks.
+    u_vaccination_ratio : float
+        Ratio of vaccinated unistudents.
+    l_vaccination_ratio : float
+        Ratio of vaccinated lecturers.
+    presence_fraction : float
+        Fraction of students that are present in each lecture.
     u_screen_interval : integer
         Interval between preventive screens in the unistudent agent group.
     l_screen_interval : integer
         Interval between preventive screens in the lecturer agent group.
-    unistudent_mask : bool
-        Wheter or not unistudents wear masks.
-    lecturer_mask : bool
-        Wheter or not lecturers wear masks.
-    presence_fraction : float
-        Fraction of students that are present in each lecture.
-    ventilation_mod : float
-        Modification to the transmission risk due to ventilation. 
-        1 = no modification.
+    testing : bool
+        Whether or not the simulation is running tests to detect infections.
+    vaccination_modification : float
+        Effectiveness of vaccinations against infection.
         
     Returns:
     --------
@@ -224,7 +221,8 @@ def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_pa
     bmap = {True:'T', False:'F'}
     measure_string = 'university_lmask-{}_umask-{}_pfrac-{}'\
         .format(bmap[l_mask], bmap[u_mask], presence_fraction) +\
-        '_uvacc-{}_lvacc-{}'.format(u_vaccination_ratio, l_vaccination_ratio)
+        '_uvacc-{}_lvacc-{}'.format(u_vaccination_ratio, l_vaccination_ratio) +\
+        '_vaccmod-{}'.format(vaccination_modification)
 
     # figure out which host we are running on and determine number of cores to
     # use for the parallel programming
@@ -249,7 +247,7 @@ def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_pa
     params = [(mode, contact_network_src, contact_network_type, testing,
                u_vaccination_ratio, l_vaccination_ratio,
                u_screen_interval, l_screen_interval, 
-               u_mask, l_mask, presence_fraction, i) \
+               u_mask, l_mask, presence_fraction, vaccination_modification, i) \
             for i in range(N_runs)]
     
     ensemble_results = pd.DataFrame()
