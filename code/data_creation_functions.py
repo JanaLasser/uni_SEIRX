@@ -136,7 +136,7 @@ def run_model(params):
       transmission_risk_ventilation_modifier = \
                  measures['transmission_risk_ventilation_modifier'],
       transmission_risk_vaccination_modifier = \
-                 simulation_params['vaccination_modification'],
+                 simulation_params['transmission_risk_vaccination_modifier'],
       seed=seed)
 
     # run the model until the outbreak is over
