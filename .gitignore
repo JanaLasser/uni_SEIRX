@@ -2,7 +2,8 @@ code/.ipynb_checkpoints/
 code/__pycache__/
 data/raw/
 data/cleaned/
-code/params/.ipynb_checkpoints/
+.ipynb_checkpoints/
+code/.ipynb_checkpoints/
 code/test_infection_dynamics.ipynb
 code/exploratory*
 data/documents/
