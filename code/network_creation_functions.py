@@ -99,7 +99,7 @@ def add_students(G, student_df, studies_df):
     student_ids = list(new_students)
     student_df = student_df[student_df['student_id'].isin(new_students)]
     studies_df = studies_df.set_index(['student_id', 'study_id'])
-    print('adding {} students'.format(len(student_ids)))
+    print('\tadding {} students'.format(len(student_ids)))
     
     # Students can have more than one study. Find a student's main study
     # by looking at the study id of the individual lectures they visit.
@@ -146,7 +146,7 @@ def add_students(G, student_df, studies_df):
             'term':term,
             'unit':1} 
         })
-    print('no study found for {} students'.format(no_study_found))
+    print('\tno study found for {} students'.format(no_study_found))
         
         
 def add_students_dummy(G, student_df):
@@ -154,7 +154,7 @@ def add_students_dummy(G, student_df):
                              data['type'] == 'unistudent'])
     new_students = set(student_df['student_id']).difference(existing_students)
     student_ids = list(new_students)
-    print('adding {} students'.format(len(student_ids)))
+    print('\tadding {} students'.format(len(student_ids)))
     
     for student_id in student_ids:
         G.add_node(student_id)
@@ -166,7 +166,7 @@ def add_lecturers(G, lecturer_df, organisation_df):
                              data['type'] == 'lecturer'])
     new_lecturers = set(lecturer_df['lecturer_id']).difference(existing_lecturers)
     lecturer_ids = list(new_lecturers)
-    print('adding {} lecturers'.format(len(lecturer_ids)))
+    print('\tadding {} lecturers'.format(len(lecturer_ids)))
     
     # TODO: map units to camspuses
     for lecturer_id in lecturer_ids:
@@ -184,14 +184,15 @@ def add_lecturers_dummy(G, lecturer_df):
                              data['type'] == 'lecturer'])
     new_lecturers = set(lecturer_df['lecturer_id']).difference(existing_lecturers)
     lecturer_ids = list(new_lecturers)
-    print('adding {} lecturers'.format(len(lecturer_ids)))
+    print('\tadding {} lecturers'.format(len(lecturer_ids)))
     
     for lecturer_id in lecturer_ids:
         G.add_node(lecturer_id)
         nx.set_node_attributes(G, {lecturer_id:{'type':'lecturer'}})
 
         
-def link_event_members(G, group1, group2, wd, day, duration, link_type):
+def link_event_members(G, group1, group2, wd, day, duration, event_type,
+                       lecture_type, link_type):
     # student <-> student contacts
     edge_keys = []
     for n1 in group1:
@@ -212,6 +213,8 @@ def link_event_members(G, group1, group2, wd, day, duration, link_type):
                     else:
                         G.add_edge(n1, n2, \
                                    link_type = link_type,
+                                   event_type = event_type,
+                                   lecture_type = lecture_type,
                                    day = day,
                                    weekday = wd,
                                    duration = duration,
@@ -219,14 +222,19 @@ def link_event_members(G, group1, group2, wd, day, duration, link_type):
                     edge_keys.append(key)
                     
                     
-def get_event_information(event_dates, students, lecturers, rooms, frac, event):
+def get_event_information(event_dates, events, students, lecturers, rooms, frac,
+                          event_type):
     
     assert len(event_dates) == 1
-    id_name = '{}_id'.format(event)
-    
+    id_name = '{}_id'.format(event_type)
     event_id = event_dates[id_name].values[0]
+    
     # figure out for how long [minutes] the event went on
     duration = event_dates['duration'].values[0] 
+    
+    # figure out which lecture type the event belongs to
+    lecture_type = events[events["lecture_id"] == \
+            event_dates["lecture_id"].values[0]]["lecture_type"].values[0]
     
     students_in_event = students[\
         students[id_name] == event_id]['student_id'].unique()
@@ -267,29 +275,31 @@ def get_event_information(event_dates, students, lecturers, rooms, frac, event):
         students_in_event = np.random.choice(students_in_event, 
             len(students_in_event) - students_to_remove, replace=False)
         
-    return students_in_event, lecturers_in_event, duration
+    return students_in_event, lecturers_in_event, duration, lecture_type
 
 
-def link_event(G, students_in_event, lecturers_in_event, wd, day, duration):
+def link_event(G, students_in_event, lecturers_in_event, wd, day, duration,
+               event_type, lecture_type):
     # student <-> student contacts
     link_event_members(G, students_in_event, students_in_event, wd, day, 
-                       duration, 'student_student')
+                       duration, event_type, lecture_type, 'student_student')
     # student <-> lecturer contacts
     link_event_members(G, students_in_event, lecturers_in_event, wd, day, 
-                       duration, 'student_lecturer')
+                       duration, event_type, lecture_type, 'student_lecturer')
     # lecturer <-> lecturer contacts
     link_event_members(G, lecturers_in_event, lecturers_in_event, wd, day, 
-                       duration, 'lecturer_lecturer')
+                       duration, event_type, lecture_type, 'lecturer_lecturer')
                     
 
 def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
-                       event):
+                       event_type):
     wd = get_weekday(day)
     day = str(day)
-    id_name = '{}_id'.format(event)
-    new_id_name = 'new_{}_id'.format(event)
+    id_name = '{}_id'.format(event_type)
+    print(id_name)
+    new_id_name = 'new_{}_id'.format(event_type)
     
-    assert event in ['group', 'exam'], print('unexpected event encountered!')
+    assert event_type in ['group', 'exam'], print('unexpected event encountered!')
     
     day_dates = dates[dates['date'] == pd.to_datetime(day)]
     event_ids = set(events[id_name])\
@@ -311,11 +321,11 @@ def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
         
         # simple case: one event ID is associated with one date
         elif len(event_dates) == 1:
-            students_in_event, lecturers_in_event, duration = \
-                get_event_information(event_dates, students, lecturers, rooms, 
-                                      frac, event)
+            students_in_event, lecturers_in_event, duration, lecture_type = \
+                get_event_information(event_dates, events, students, lecturers,
+                                      rooms, frac, event_type)
             link_event(G, students_in_event, lecturers_in_event, wd, day, 
-                       duration)
+                       duration, event_type, lecture_type)
             
         # multiple dates for a single event but all start at different times:
         # assume that the same students went to all dates and add contact 
@@ -326,11 +336,11 @@ def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
             for start_time in event_dates['start_time']:
                 sub_event_dates = event_dates[event_dates['start_time'] == \
                                               start_time]
-                students_in_event, lecturers_in_event, duration = \
-                get_event_information(sub_event_dates, students, lecturers, \
-                                      rooms, frac, event)
+                students_in_event, lecturers_in_event, duration, lecture_type = \
+                get_event_information(sub_event_dates, events, students, 
+                                      lecturers, rooms, frac, event_type)
                 link_event(G, students_in_event, lecturers_in_event, wd, day, 
-                           duration)
+                           duration, event_type, lecture_type)
             
         # multiple dates for a single event but all start at the same time and
         # in different rooms:
@@ -355,11 +365,11 @@ def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
                     .drop(columns=[id_name])\
                     .rename(columns={new_id_name:id_name})
                 
-                students_in_event, lecturers_in_event, duration = \
-                get_event_information(sub_event_dates, students, lecturers, \
-                                      rooms, frac, event)
+                students_in_event, lecturers_in_event, duration, lecture_type = \
+                get_event_information(sub_event_dates, events, students,
+                                      lecturers, rooms, frac, event_type)
                 link_event(G, students_in_event, lecturers_in_event, wd, day, 
-                           duration)
+                           duration, event_type, lecture_type)
         
         # some dates are at the same time, some at different times
         elif (len(event_dates.drop_duplicates(subset=['start_time'])) > 1) and \
@@ -367,7 +377,7 @@ def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
               len(event_dates)):
             
             print('Dealing with edge case: {} {} on {}'\
-                  .format(event, event_id, day))
+                  .format(event_type, event_id, day))
             
             # check if some dates are completely contained within other dates
             to_drop = []
@@ -411,19 +421,20 @@ def add_event_contacts(G, students, lecturers, events, dates, rooms, day, frac,
                         sub_event_dates = tmp_event_dates[\
                             tmp_event_dates['room_id'] == room].copy()
                             
-                        students_in_event, lecturers_in_event, duration = \
-                        get_event_information(sub_event_dates, students, lecturers, \
-                                              rooms, frac, event)
+                        students_in_event, lecturers_in_event, duration, \
+                            lecture_type = \
+                        get_event_information(sub_event_dates, events, students,
+                                              lecturers, rooms, frac, event_type)
                         link_event(G, students_in_event, lecturers_in_event, wd,
-                                   day, duration)
+                                   day, duration, event_type, lecture_type)
         
                 # evebts that occur at a different time
                 else:
-                    students_in_event, lecturers_in_event, duration = \
-                            get_event_information(tmp_event_dates, students, \
-                                        lecturers, rooms, frac, event)
+                    students_in_event, lecturers_in_event, duration, lecture_type = \
+                            get_event_information(tmp_event_dates, events, students, \
+                                        lecturers, rooms, frac, event_type)
                     link_event(G, students_in_event, lecturers_in_event, wd, 
-                                   day, duration)
+                                   day, duration, event_type, lecture_type)
            
         else:
             print('something happened that I didnt think could happen!')
@@ -530,18 +541,20 @@ def create_network(students, lecturers, studies, organisations, groups, dates,
     
     G = nx.MultiGraph()
     # add students from lecture data
+    print('lectures')
     add_students(G, students, studies)
     add_lecturers(G, lecturers, organisations)
     
     # add additional students from exam data
+    print('exams')
     add_students(G, estudents, studies)
     add_lecturers(G, electurers, organisations)
     
     for day in days:
-        # add connections between students and lecturers that occur in lectures
+        # add connections between students and lecturers that occur in exams
         add_event_contacts(G, estudents, electurers, exams, edates, rooms, day,
                                frac, 'exam')
-        # add connections between students and lecturers that occur in exams
+        # add connections between students and lecturers that occur in lectures
         add_event_contacts(G, students, lecturers, groups, dates, rooms, day,
                                frac, 'group')
     return G
