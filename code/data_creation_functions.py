@@ -76,7 +76,8 @@ def run_model(params):
 
     measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
     measures['lecturer_vaccination_ratio'] = l_vaccination_ratio
-    simulation_params["transmission_risk_vaccination_modifier"] = vaccination_modification
+    simulation_params["transmission_risk_vaccination_modifier"] = \
+         {'reception':vaccination_modification, 'transmission':0}
 
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
@@ -163,6 +164,41 @@ def run_model(params):
         measures['transmission_risk_ventilation_modifier'],
     row['transmission_risk_vaccination_modifier'] =\
         simulation_params['transmission_risk_vaccination_modifier']
+    
+    
+    # unvaccinated lecturers
+    row['unvaccinated_lecturers'] = \
+        len([a for a in model.schedule.agents if a.type == "lecturer" and \
+             a.vaccinated==False])
+    # vaccinated lecturers
+    row['vaccinated_lecturers'] = \
+        len([a for a in model.schedule.agents if a.type == "lecturer" and \
+             a.vaccinated==True])
+    # infected unvaccinated lecturers
+    row['infected_unvaccinated_lecturers'] = \
+        len([a for a in model.schedule.agents if a.type == "lecturer" and \
+             a.vaccinated==False and a.recovered==True])
+    # infected vaccinated lecturers
+    row['infected_vaccinated_lecturers'] = \
+        len([a for a in model.schedule.agents if a.type == "lecturer" and \
+             a.vaccinated==True and a.recovered==True])
+    
+    # unvaccinated unistudents
+    row['unvaccinated_unistudents'] = \
+        len([a for a in model.schedule.agents if a.type == "unistudents" and \
+             a.vaccinated==False])
+    # vaccinated unistudents
+    row['vaccinated_unistudents'] = \
+        len([a for a in model.schedule.agents if a.type == "unistudents" and \
+             a.vaccinated==True])
+    # infected unvaccinated unistudents
+    row['infected_unvaccinated_unistudents'] = \
+        len([a for a in model.schedule.agents if a.type == "unistudents" and \
+             a.vaccinated==False and a.recovered==True])
+    # infected vaccinated unistudents
+    row['infected_vaccinated_unistudents'] = \
+        len([a for a in model.schedule.agents if a.type == "unistudents" and \
+             a.vaccinated==True and a.recovered==True])
         
     return row
 
@@ -171,7 +207,7 @@ def run_ensemble(mode, N_runs, contact_network_src, contact_network_type, res_pa
                  u_mask=False, l_mask=False, u_vaccination_ratio=0.0,
                  l_vaccination_ratio=0.0, presence_fraction=1.0, 
                  u_screen_interval=None, l_screen_interval=None, testing=False,
-                 vaccination_modification=0.6):
+                 vaccination_modification=0.47):
     '''
     Utility function to run an ensemble of simulations for a given parameter 
     combination.
