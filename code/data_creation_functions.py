@@ -1,6 +1,6 @@
 import pandas as pd
 from os.path import join, exists
-from os import listdir, mkdir
+from os import mkdir
 import networkx as nx
 import numpy as np
 import json
@@ -144,7 +144,7 @@ def run_model(params):
     for i in range(N_steps):
         # break if first outbreak is over
         if len([a for a in model.schedule.agents if \
-            (a.exposed == True or a.infectious == True)]) == 0:
+            (a.exposed is True or a.infectious is True)]) == 0:
             break
         model.step()
 
