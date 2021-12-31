@@ -1,9 +1,9 @@
+import json
 import pandas as pd
 from os.path import join, exists
 from os import mkdir
 import networkx as nx
 import numpy as np
-import json
 
 from scseirx.model_uni import SEIRX_uni
 from scseirx import analysis_functions as af
