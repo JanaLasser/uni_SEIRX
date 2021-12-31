@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 import socket
 
-def compose_agents(measures, simulation_params):
+def compose_agents(measures):
     '''
     Utility function to compose agent dictionaries as expected by the simulation
     model as input from the dictionary of prevention measures.
@@ -52,7 +52,7 @@ def compose_agents(measures, simulation_params):
 
 def run_model(params):
     '''
-    Runs a simulation with an SEIRX_school uni 
+    Runs a simulation with an SEIRX_school uni
     
     Parameters:
     -----------
@@ -69,9 +69,11 @@ def run_model(params):
     u_screen_interval, l_screen_interval, u_mask, l_mask, \
     presence_fraction, vaccination_modification, seed = params
 
-    with open('params/{}_measures.json'.format(mode), 'r') as fp:
+    with open('params/{}_measures.json'.format(mode), 
+            'r', encoding="utf-8") as fp:
         measures = json.load(fp)
-    with open('params/{}_simulation_parameters.json'.format(mode), 'r') as fp:
+    with open('params/{}_simulation_parameters.json'.format(mode),
+            'r', encoding="utf-8") as fp:
         simulation_params = json.load(fp)
 
     measures['unistudent_vaccination_ratio'] = u_vaccination_ratio
@@ -81,7 +83,7 @@ def run_model(params):
 
     # create the agent dictionaries based on the given parameter values and
     # prevention measures
-    agent_types = compose_agents(measures, simulation_params)
+    agent_types = compose_agents(measures)
     agent_types['unistudent']['screening_interval'] = u_screen_interval
     agent_types['lecturer']['screening_interval'] = l_screen_interval
     agent_types['unistudent']['mask'] = u_mask
@@ -94,7 +96,7 @@ def run_model(params):
 
     G = nx.readwrite.gpickle.read_gpickle(\
         join(contact_network_src, '{}_fraction-{}_{}.bz2'\
-            .format(fname, presence_fraction, contact_network_type))) 
+            .format(fname, presence_fraction, contact_network_type)))
 
     # pick an index case with a probability for unistudents and lecturers
     # corresponding to an uniform distribution of infection probability
