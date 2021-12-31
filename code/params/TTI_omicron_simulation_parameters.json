@@ -1,9 +1,9 @@
 {
 	"verbosity": 0, 
-	"base_transmission_risk": 0.165980,
+	"base_transmission_risk": 0.31,
 	"subclinical_modifier": 0.6,
-	"exposure_duration": [3.0, 1.9],
-	"time_until_symptoms": [4.4, 1.9],
+	"exposure_duration": [2.0, 1.9],
+	"time_until_symptoms": [3.0, 1.9],
 	"infection_duration": [10.91, 3.95],
 	"infection_risk_contact_type_weights":{"very_far": 0, "far": 0.26, "intermediate": 0.26, "close": 1},
 	"age_transmission_discount": {"slope":0, "intercept": 1},
