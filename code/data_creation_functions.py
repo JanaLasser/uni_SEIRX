@@ -128,8 +128,7 @@ def run_model(params):
 
     index_case = np.random.choice(["unistudent", "lecturer"], p=[p_student, p_lecturer])
 
-    # N_steps = 1000
-    N_steps = 10
+    N_steps = 1000
 
     # initialize the model
     model = SEIRX_uni(
