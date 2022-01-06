@@ -128,7 +128,8 @@ def run_model(params):
 
     index_case = np.random.choice(["unistudent", "lecturer"], p=[p_student, p_lecturer])
 
-    N_steps = 1000
+    # N_steps = 1000
+    N_steps = 10
 
     # initialize the model
     model = SEIRX_uni(
@@ -180,7 +181,7 @@ def run_model(params):
         model.step()
 
     # collect the statistics of the single run
-    row = af.get_ensemble_observables_uni(model, seed)
+    row, transmissions = af.get_ensemble_observables_uni(model, seed)
     row["seed"] = seed
     row["index_case"] = index_case
     row["unistudent_screen_interval"] = u_screen_interval
@@ -264,7 +265,7 @@ def run_model(params):
         ]
     )
 
-    return row
+    return row, transmissions, seed
 
 
 def run_ensemble(
@@ -378,10 +379,20 @@ def run_ensemble(
     ]
 
     ensemble_results = pd.DataFrame()
-    for row in tqdm(
+    if not exists(join(res_path, f"{measure_string}_transmissions")):
+        mkdir(join(res_path, f"{measure_string}_transmissions"))
+
+    for row, transmissions, run in tqdm(
         pool.imap_unordered(func=run_model, iterable=params), total=len(params)
     ):
         ensemble_results = ensemble_results.append(row, ignore_index=True)
+        transmissions.to_csv(
+            join(
+                res_path,
+                f"{measure_string}_transmissions",
+                measure_string + f"_{run}" + ".csv",
+            )
+        )
 
     if not exists(res_path):
         mkdir(res_path)
