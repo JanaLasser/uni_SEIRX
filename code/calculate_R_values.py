@@ -5,6 +5,7 @@ from os import listdir
 from multiprocess import Pool
 import psutil
 from tqdm import tqdm
+import socket
 
 
 src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
@@ -35,7 +36,17 @@ def calculate_R_values(file):
     R_values.to_csv(join(src, folder + ".csv"), index=False)
 
 
-number_of_cores = 12
+hostname = socket.gethostname()
+if hostname == "T14s":
+    number_of_cores = 14  # laptop
+    print("running on {}, using {} cores".format(hostname, number_of_cores))
+elif hostname == "medea.isds.tugraz.at":
+    number_of_cores = 200  # medea
+    print("running on {}, using {} cores".format(hostname, number_of_cores))
+else:
+    number_of_cores = 1
+    print("unknown host, using 1 core")
+
 pool = Pool(number_of_cores)
 
 
