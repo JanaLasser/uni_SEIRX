@@ -10,7 +10,7 @@ import socket
 
 def calculate_R_values(param):
     folder, src = param
-    files = listdir(folder)
+    files = listdir(join(src, folder))
     cutoffs = range(1, 101)
 
     cols = []
