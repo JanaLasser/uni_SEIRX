@@ -1,0 +1,48 @@
+import pandas as pd
+import numpy as np
+from os.path import join, isdir
+from os import listdir
+from multiprocess import Pool
+import psutil
+from tqdm import tqdm
+
+
+src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
+folders = [f for f in listdir(src) if isdir(join(src, f))]
+
+
+def calculate_R_values(file):
+    file, folder = file
+    cutoffs = range(1, 101)
+    cols = []
+    for i in cutoffs:
+        cols.extend([f"R_{i}_avg", f"R_{i}_std"])
+    R_values = pd.DataFrame(columns=cols)
+    R_values["R_1_avg"] = np.nan
+
+    for j, file in enumerate(files):
+        for cutoff in cutoffs:
+            transmissions = pd.read_csv(join(src, folder, file))
+            tmp = transmissions[transmissions["t"] <= cutoff]
+            agg = (
+                tmp[["ID", "target"]]
+                .groupby("ID")
+                .agg("count")
+                .rename(columns={"target": "count"})
+            )
+            R_values.loc[j, f"R_{cutoff}_avg"] = agg["count"].mean()
+            R_values.loc[j, f"R_{cutoff}_std"] = agg["count"].std()
+    R_values.to_csv(join(src, folder + ".csv"), index=False)
+
+
+number_of_cores = 12
+pool = Pool(number_of_cores)
+
+
+for folder in folders:
+    files = listdir(join(src, folder))
+    files = [(f, folder) for f in files]
+    for file in tqdm(
+        pool.imap_unordered(func=calculate_R_values, iterable=files), total=len(files)
+    ):
+        pass
