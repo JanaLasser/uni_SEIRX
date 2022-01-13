@@ -9,6 +9,7 @@ import socket
 
 
 def calculate_R_values(folder):
+    src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
     files = listdir(join(src, folder))
     cutoffs = range(1, 101)
 
@@ -48,7 +49,6 @@ else:
 pool = Pool(number_of_cores)
 
 
-src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
 folders = [f for f in listdir(src) if isdir(join(src, f))]
 
 for folder in tqdm(
