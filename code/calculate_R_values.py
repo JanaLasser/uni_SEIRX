@@ -9,8 +9,7 @@ import socket
 
 
 def calculate_R_values(folder):
-    src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
-    files = listdir(join(src, folder))
+    files = listdir(folder)
     cutoffs = range(1, 101)
 
     cols = []
@@ -48,8 +47,8 @@ else:
 
 pool = Pool(number_of_cores)
 
-
-folders = [f for f in listdir(src) if isdir(join(src, f))]
+src = "../data/simulation_results/omicron/ensembles_intervention_screening_omicron_all"
+folders = [join(src, f) for f in listdir(src) if isdir(join(src, f))]
 
 for folder in tqdm(
     pool.imap_unordered(func=calculate_R_values, iterable=folders), total=len(folders)
