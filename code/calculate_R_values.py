@@ -55,3 +55,5 @@ for folder in tqdm(
     pool.imap_unordered(func=calculate_R_values, iterable=params), total=len(params)
 ):
     pass
+
+pool.close()
