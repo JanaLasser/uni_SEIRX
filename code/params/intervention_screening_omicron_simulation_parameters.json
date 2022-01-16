@@ -1,12 +1,35 @@
 {
-	"verbosity": 0, 
-	"base_transmission_risk": 0.31,
+	"verbosity": 0,
+	"base_transmission_risk": 0.27675,
 	"subclinical_modifier": 0.6,
-	"exposure_duration": [2.0, 1.9],
-	"time_until_symptoms": [3.0, 1.9],
-	"infection_duration": [10.91, 3.95],
-	"infection_risk_contact_type_weights":{"very_far": 0, "far": 0.26, "intermediate": 0.26, "close": 1},
-	"age_transmission_discount": {"slope":0, "intercept": 1},
-	"age_symptom_discount": {"slope":0, "intercept":0.6},
-	"mask_filter_efficiency":{"exhale":0.5, "inhale":0.7}
+	"exposure_duration": [
+		2.0,
+		1.9
+	],
+	"time_until_symptoms": [
+		3.0,
+		1.9
+	],
+	"infection_duration": [
+		10.91,
+		3.95
+	],
+	"infection_risk_contact_type_weights": {
+		"very_far": 0,
+		"far": 0.26,
+		"intermediate": 0.26,
+		"close": 1
+	},
+	"age_transmission_discount": {
+		"slope": 0,
+		"intercept": 1
+	},
+	"age_symptom_discount": {
+		"slope": 0,
+		"intercept": 0.6
+	},
+	"mask_filter_efficiency": {
+		"exhale": 0.5,
+		"inhale": 0.7
+	}
 }
