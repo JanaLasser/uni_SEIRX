@@ -13,7 +13,7 @@ if N_runs == 1:
 
 mode = 'TTI_omicron'
 screening_params = pd.read_csv(join('screening_params', mode + '.csv'))
-contact_network_src = '../data/networks'
+contact_network_src = '../../data/networks'
 
 network_types = ["all"]
 
@@ -33,7 +33,7 @@ for p in params:
     l_vaccination_ratio, presence_fraction, \
     vaccination_modification, contact_network_type = p
     
-    dst = '../data/simulation_results/omicron/ensembles_{}_{}'\
+    dst = '../../data/simulation_results/omicron/ensembles_{}_{}'\
         .format(mode, contact_network_type)
     
     dcf.run_ensemble(mode, N_runs, contact_network_src, 

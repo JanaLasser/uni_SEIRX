@@ -12,7 +12,7 @@ if N_runs == 1:
 	testing = True
 
 mode = 'TTI_delta'
-contact_network_src = '../data/networks'
+contact_network_src = '../../data/networks'
 
 network_types = ['all', 'TU', 'NaWi']
 
@@ -29,7 +29,7 @@ for p in params:
     N_runs, u_mask, l_mask, u_vaccination_ratio,\
     l_vaccination_ratio, presence_fraction, contact_network_type = p
     
-    dst = '../data/simulation_results/delta/ensembles_{}_{}'\
+    dst = '../../data/simulation_results/delta/ensembles_{}_{}'\
         .format(mode, contact_network_type)
     
     dcf.run_ensemble(mode, N_runs, contact_network_src, 

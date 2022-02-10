@@ -33,7 +33,7 @@ if N_runs == 1:
 
 print("there are {} different parameter combinations".format(len(params)))
 
-contact_network_src = "../data/networks"
+contact_network_src = "../../data/networks"
 
 for p in params:
     (
@@ -47,7 +47,7 @@ for p in params:
         contact_network_type,
     ) = p
 
-    dst = "../data/simulation_results/omicron/ensembles_{}_{}".format(
+    dst = "../../data/simulation_results/omicron/ensembles_{}_{}".format(
         mode, contact_network_type
     )
 

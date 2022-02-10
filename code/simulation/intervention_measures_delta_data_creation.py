@@ -29,13 +29,13 @@ params = [(N_runs,
 print('there are {} different parameter combinations'.format(len(params)))
 
 
-contact_network_src = '../data/networks'
+contact_network_src = '../../data/networks'
 
 for p in params:
     N_runs, u_mask, l_mask, u_vaccination_ratio,\
     l_vaccination_ratio, presence_fraction, contact_network_type = p
     
-    dst = '../data/simulation_results/delta/ensembles_{}_{}'\
+    dst = '../../data/simulation_results/delta/ensembles_{}_{}'\
         .format(mode, contact_network_type)
     
     dcf.run_ensemble(mode, N_runs, contact_network_src, contact_network_type, dst, 
