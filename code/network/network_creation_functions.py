@@ -41,7 +41,8 @@ study_map = {
     'Doctor of Philosophy-Doktoratsstudium'       : 'PhD',
     'Dr.-Studium der medizin. Wissenschaft'       : 'PhD',
     'Individuelles Diplomstudium'                 : 'bachelor & master',
-    'Maschinenbau'                                : 'bachelor & master'
+    'Maschinenbau'                                : 'bachelor & master',
+    'Erweiterungsstudium Bachelor'                : 'bachelor'
 }
 
 
@@ -590,6 +591,17 @@ def calculate_duration(row):
     minutes = (datetime.datetime.combine(dummydate, end) - \
                datetime.datetime.combine(dummydate, start)).seconds / 60
     return minutes
+
+def calculate_end_time(row):
+    if row["imputed_end_time"]:
+        start = row['start_time']
+        duration = row["duration"]
+        dummydate = datetime.date.today()
+        end = datetime.datetime.combine(dummydate, start) + \
+          datetime.timedelta(minutes=int(duration))
+        return end.time()
+    else:
+        return row["end_time"]
 
 
 def draw_uni_network(G, students, lecturers, day, study_id, dst):
