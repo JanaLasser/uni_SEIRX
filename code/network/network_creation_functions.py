@@ -93,46 +93,24 @@ def get_study_data(study_id, studies, students, lecturers, groups, rooms,
             sample_room_ids)
 
 
-def add_students(G, student_df, studies_df):
+def add_students(G, student_df):
     existing_students = set([n for n, data in G.nodes(data=True) if \
                              data['type'] == 'unistudent'])
     new_students = set(student_df['student_id']).difference(existing_students)
     student_ids = list(new_students)
     student_df = student_df[student_df['student_id'].isin(new_students)]
-    studies_df = studies_df.set_index(['student_id', 'study_id'])
+    student_df = student_df.set_index(['student_id', 'study_id'])
     print('\tadding {} students'.format(len(student_ids)))
-    
-    # Students can have more than one study. Find a student's main study
-    # by looking at the study id of the individual lectures they visit.
-    # A student's main study in the given semester is the study from which
-    # the majority of their lectures stems.
-    lecture_counts = student_df[['student_id', 'study_id', 'lecture_id']]\
-        .groupby(by=['student_id', 'study_id'])\
-        .agg('count')\
-        .rename(columns={'lecture_id':'lecture_count'})\
-        .sort_values(by='lecture_count', ascending=False)\
-        .reset_index()
-    main_studies = lecture_counts[['student_id', 'study_id']]\
-        .drop_duplicates(subset=['student_id'])\
-        .set_index('student_id')
-    
-    # add information whether the student is a TU Graz or NaWi student
-    study_labels = pd.read_csv(join('../data/cleaned', 'study_labels.csv'))
-    label_map = {row['study_id']:row['study_label'] for i, row in \
-                study_labels.iterrows()}
-    main_studies['study_label'] = main_studies['study_id']\
-        .replace(label_map)
     
     no_study_found = 0
     for student_id in student_ids:
         # get the main study and the term number for the main study
-        main_study = main_studies.loc[student_id, 'study_id']
-        study_type = main_studies.loc[student_id, 'study_label']
-        try:
-            term = studies_df.loc[student_id, main_study]['term_number']
-        except KeyError:
+        main_study = student_df.loc[student_id, 'main_study'].values[0]
+        study_type = student_df.loc[student_id, main_study]['study_label']
+        study_level = student_df.loc[student_id, main_study]['study_level']
+        term = studies_df.loc[student_id, main_study]['term_number']
+        if term != term: # nan-check
             no_study_found += 1
-            term = np.nan
         
         # add the student as a node to the network and all information
         # we have for the student as node attributes.
@@ -144,6 +122,7 @@ def add_students(G, student_df, studies_df):
             'type':'unistudent',
             'main_study':main_study,
             'study_type':study_type,
+            'study_level':study_level,
             'term':term,
             'unit':1} 
         })
@@ -530,7 +509,7 @@ def remove_unistudent_contacts(G, level):
 def create_single_day_network(students, lecturers, studies, organisations, 
                               groups, dates, rooms, day, frac=1):
     G = nx.MultiGraph()
-    add_students(G, students, studies)
+    add_students(G, students)
     add_lecturers(G, lecturers, organisations)
     add_group_contacts(G, students, lecturers, groups, dates, rooms, day,
                        frac)
@@ -543,12 +522,12 @@ def create_network(students, lecturers, studies, organisations, groups, dates,
     G = nx.MultiGraph()
     # add students from lecture data
     print('lectures')
-    add_students(G, students, studies)
+    add_students(G, students)
     add_lecturers(G, lecturers, organisations)
     
     # add additional students from exam data
     print('exams')
-    add_students(G, estudents, studies)
+    add_students(G, estudents)
     add_lecturers(G, electurers, organisations)
     
     for day in days:
