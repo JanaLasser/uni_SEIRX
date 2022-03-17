@@ -3,7 +3,7 @@
 
 **NOTE 1:** All data is available at https://doi.org/10.17605/OSF.IO/UPX7R. Simulation results are split into simulations with the Delta variant and simulations with the Omicron variant.  
 
-**NOTE 2:** The code of the agent-based simulation framework is available in [this](https://github.com/JanaLasser/agent_based_COVID_SEIRX) repository. The present repository contains only the application to the university context.  
+**NOTE 2:** The code of the agent-based simulation framework is available in [this](https://github.com/JanaLasser/agent_based_COVID_SEIRX) repository. For this simulation, version 1.4.2 was used. The present repository contains only the application to the university context.  
 
 **NOTE 3:** The results pertaining to simulations with the Delta variant are described in [this](https://medrxiv.org/cgi/content/short/2021.11.16.21266383v1) preprint. The preprint for the results with the Omicron variant is upcoming.  
 
