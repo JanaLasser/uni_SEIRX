@@ -1,6 +1,66 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import spearmanr, pearsonr
+
+def weibull_two_param(shape, scale):
+    '''
+    A two-parameter Weibull distribution, based on numpy ramdon's single 
+    parameter distribution. We use this distribution in the simulation to draw
+    random epidemiological parameters for agents from the given distribution
+    See https://numpy.org/doc/stable/reference/random/generated/numpy.random.weibull.html
+    '''
+    return scale * np.random.weibull(shape)
+
+
+def get_weibull_shape(k, mu, var):
+    '''
+    Calculates the shape parameter of a Weibull distribution, given its mean
+    mu and its variance var
+    '''
+    return var / mu**2 - gamma(1 + 2/k) / gamma(1+1/k)**2 + 1
+
+
+
+def get_weibull_scale(mu, k):
+    '''
+    Calculates the scale parameter of a Weibull distribution, given its mean
+    mu and its shape parameter k
+    '''
+    return mu / gamma(1 + 1/k)
+
+
+def get_epi_params():
+    '''
+    Gets a combination of exposure duration, time until symptom onset and
+    infection duration that satisfies all conditions.
+    '''
+    
+    
+    # shape and scale of Weibull distributions defined by the following means
+    # and variances
+    # exposure_duration = [5, 1.9] / days
+    # time_until_symptoms = [6.4, 0.8] / days
+    # infection_duration = [10.91, 3.95] / days
+    epi_params = {
+        'exposure_duration': [2.760216566831372, 8.033918996303989],
+        'time_until_symptoms': [8.400996275174748, 6.727040406005965],
+        'infection_duration': [1.8546626247614466, 9.458131298762975]}  
+
+    tmp_epi_params = {}
+    # iterate until a combination that fulfills all conditions is found
+    while True:
+        for param_name, param in epi_params.items():
+            tmp_epi_params[param_name] = \
+                round(weibull_two_param(param[0], param[1]))
+
+        # conditions
+        if tmp_epi_params['exposure_duration'] > 0 and \
+           tmp_epi_params['time_until_symptoms'] >= \
+           tmp_epi_params['exposure_duration'] and\
+           tmp_epi_params['infection_duration'] > \
+           tmp_epi_params['exposure_duration']:
+           
+            return tmp_epi_params
         
 
 def get_outbreak_size_pdf(school_type, ensemble_results, outbreak_sizes):
