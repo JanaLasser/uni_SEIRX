@@ -160,6 +160,7 @@ def run_model(params):
         transmission_risk_vaccination_modifier=simulation_params[
             "transmission_risk_vaccination_modifier"
         ],
+        N_days_in_network=simulation_params["N_days_in_network"],
         seed=seed,
     )
 
@@ -197,7 +198,8 @@ def run_model(params):
     row["transmission_risk_vaccination_modifier"] = simulation_params[
         "transmission_risk_vaccination_modifier"
     ]
-
+    row["N_days_in_network"]=simulation_params["N_days_in_network"]
+    
     # unvaccinated lecturers
     row["unvaccinated_lecturers"] = len(
         [
@@ -343,19 +345,18 @@ def run_ensemble(
     hostname = socket.gethostname()
     if hostname == "desiato":
         number_of_cores = 200  # desiato
-        print("running on {}, using {} cores".format(hostname, number_of_cores))
     elif hostname == "T14s":
         number_of_cores = 14  # laptop
-        print("running on {}, using {} cores".format(hostname, number_of_cores))
     elif hostname == "marvin":
         number_of_cores = 28  # marvin
-        print("running on {}, using {} cores".format(hostname, number_of_cores))
     elif hostname == "medea.isds.tugraz.at":
         number_of_cores = 200  # medea
-        print("running on {}, using {} cores".format(hostname, number_of_cores))
     else:
         print("unknown host")
 
+    if N_runs < number_of_cores:
+        number_of_cores = N_runs
+    print("running on {}, using {} cores".format(hostname, number_of_cores))
     pool = Pool(number_of_cores)
 
     params = [
@@ -392,7 +393,8 @@ def run_ensemble(
                 measure_string + f"_{run}" + ".csv",
             )
         )
-
+    pool.close()
+    
     if not exists(res_path):
         mkdir(res_path)
 
