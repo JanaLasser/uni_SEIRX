@@ -3,16 +3,16 @@
 	"base_transmission_risk": 0.27675,
 	"subclinical_modifier": 0.6,
 	"exposure_duration": [
-		2.0,
-		1.9
+		4.31,
+		3.05
 	],
 	"time_until_symptoms": [
-		3.0,
-		1.9
+		1.49,
+		1.75
 	],
 	"infection_duration": [
-		10.91,
-		3.95
+		10.65,
+		4.15
 	],
 	"infection_risk_contact_type_weights": {
 		"very_far": 0,
